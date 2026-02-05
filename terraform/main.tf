@@ -92,9 +92,9 @@ resource "aws_route_table_association" "private_assoc" {
 # Security Groups
 ############################
 
-# Frontend 
-resource "aws_security_group" "frontend_sg" {
-  name   = "frontend-sg-fr"
+# Vote/Result SG 
+resource "aws_security_group" "faheem-vote-result-sg" {
+  name   = "faheem-vote-result-sg"
   vpc_id = aws_vpc.main.id
 
   ingress {
@@ -122,9 +122,9 @@ resource "aws_security_group" "frontend_sg" {
   
 }
 
-# Backend SG
-resource "aws_security_group" "backend_sg" {
-  name   = "backend-sg-fr"
+# Redis/Worker SG
+resource "aws_security_group" "faheme-redis-worker-sf" {
+  name   = "faheme-redis-worker-sf"
   vpc_id = aws_vpc.main.id
 
   
@@ -132,7 +132,7 @@ resource "aws_security_group" "backend_sg" {
     from_port       = 6379
     to_port         = 6379
     protocol        = "tcp"
-    security_groups = [aws_security_group.frontend_sg.id]
+    security_groups = [aws_security_group.faheem-vote-result-sg.id]
   }
 
   egress {
@@ -143,47 +143,74 @@ resource "aws_security_group" "backend_sg" {
   }
 }
 
+#Postgres SG
+resource "aws_security_group" "faheme-postgres-sf" {
+  name   = "faheme-postgres-sf"
+  vpc_id = aws_vpc.main.id
+
+  
+  ingress {
+    from_port       = 5432 
+    to_port         = 5432 
+    protocol        = "tcp"
+    security_groups = [aws_security_group.faheme-redis-worker-sf.id]
+  }
+
+  ingress {
+  from_port       = 5432
+  to_port         = 5432
+  protocol        = "tcp"
+  security_groups = [aws_security_group.faheem-vote-result-sg.id]
+    }
+
+  egress {
+    from_port = 0
+    to_port   = 0
+    protocol  = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+}
 
 ############################
 # EC2 Instances
 ############################
 
-# Instance A — Frontend + Bastion
+# Instance A — (Vote + Result)
 resource "aws_instance" "frontend" {
   ami                    = "ami-0a854fe96e0b45e4e"
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.public.id
-  vpc_security_group_ids = [aws_security_group.frontend_sg.id]
+  vpc_security_group_ids = [aws_security_group.faheem-vote-result-sg.id]
   key_name               = "faheem-key-frankfurt"
 
   tags = {
-    Name = "instance-a-frontend-fr"
+    Name = "instance-a-frontend-(Vote + Result)-faheem"
   }
 }
 
-# Instance B — Backend
+# Instance B — (Redis + Worker)
 resource "aws_instance" "backend" {
   ami                    = "ami-0a854fe96e0b45e4e"
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.private.id
-  vpc_security_group_ids = [aws_security_group.backend_sg.id]
+  vpc_security_group_ids = [aws_security_group.faheme-redis-worker-sf.id]
   key_name               = "faheem-key-frankfurt"
 
   tags = {
-    Name = "instance-b-backend-fr"
+    Name = "instance-b-backend-(Redis + Worker)-faheem"
   }
 }
 
-# Instance C — Database
+# Instance C — (PostgreSQL)
 resource "aws_instance" "database" {
   ami                    = "ami-0a854fe96e0b45e4e"
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.private.id
-  vpc_security_group_ids = [aws_security_group.backend_sg.id]
+  vpc_security_group_ids = [aws_security_group.faheme-postgres-sf.id]
   key_name               = "faheem-key-frankfurt"
 
   tags = {
-    Name = "instance-c-database-fr"
+    Name = "instance-c-database-(PostgreSQL)-faheem"
   }
 }
 
