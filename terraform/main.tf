@@ -7,10 +7,19 @@ terraform {
       version = "~> 5.0"
     }
   }
+
+   backend "s3" {
+    bucket         = "my-terraform-state-bucket-faheem"
+    key            = "vote-app/terraform.tfstate"
+    region         = "eu-central-1"
+    dynamodb_table = "terraform-locks-faheem"
+    encrypt        = true
+  }
+
 }
 
 provider "aws" {
-  region = "eu-central-1"
+  region = var.region
 }
 
 ############################
@@ -21,7 +30,7 @@ resource "aws_vpc" "main" {
   cidr_block = "10.0.0.0/16"
 
   tags = {
-    Name = "vote-vpc-fr"
+    Name = "vote-vpc-${var.signature}"
   }
 }
 
@@ -33,20 +42,20 @@ resource "aws_subnet" "public" {
   vpc_id                  = aws_vpc.main.id
   cidr_block              = "10.0.1.0/24"
   map_public_ip_on_launch = true
-  availability_zone       = "eu-central-1a"
+  availability_zone       = "${var.region}a"
 
   tags = {
-    Name = "public-subnet-fr"
+    Name = "public-subnet-${var.signature}"
   }
 }
 
 resource "aws_subnet" "private" {
   vpc_id            = aws_vpc.main.id
   cidr_block        = "10.0.2.0/24"
-  availability_zone = "eu-central-1b"
+  availability_zone = "${var.region}b"
 
   tags = {
-    Name = "private-subnet-fr"
+    Name = "private-subnet-${var.signature}"
   }
 }
 
@@ -113,6 +122,14 @@ resource "aws_security_group" "faheem-vote-result-sg" {
     cidr_blocks = ["0.0.0.0/0"]
   }
 
+  ingress {
+    description = "SSH access"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]   # Change to your IP for security
+  }
+
   egress {
     from_port   = 0
     to_port     = 0
@@ -135,6 +152,14 @@ resource "aws_security_group" "faheme-redis-worker-sf" {
     security_groups = [aws_security_group.faheem-vote-result-sg.id]
   }
 
+  ingress {
+    description = "SSH access"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    security_groups = [aws_security_group.faheem-vote-result-sg.id]
+  }
+
   egress {
     from_port = 0
     to_port   = 0
@@ -153,15 +178,16 @@ resource "aws_security_group" "faheme-postgres-sf" {
     from_port       = 5432 
     to_port         = 5432 
     protocol        = "tcp"
-    security_groups = [aws_security_group.faheme-redis-worker-sf.id]
+    security_groups = [aws_security_group.faheme-redis-worker-sf.id,aws_security_group.faheem-vote-result-sg.id]
   }
 
   ingress {
-  from_port       = 5432
-  to_port         = 5432
-  protocol        = "tcp"
-  security_groups = [aws_security_group.faheem-vote-result-sg.id]
-    }
+    description = "SSH access"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    security_groups = [aws_security_group.faheem-vote-result-sg.id]
+  }
 
   egress {
     from_port = 0
@@ -177,40 +203,40 @@ resource "aws_security_group" "faheme-postgres-sf" {
 
 # Instance A — (Vote + Result)
 resource "aws_instance" "frontend" {
-  ami                    = "ami-0a854fe96e0b45e4e"
-  instance_type          = "t2.micro"
+  ami                    = var.ami
+  instance_type          = var.instance_type
   subnet_id              = aws_subnet.public.id
   vpc_security_group_ids = [aws_security_group.faheem-vote-result-sg.id]
-  key_name               = "faheem-key-frankfurt"
+  key_name               = var.key_name
 
   tags = {
-    Name = "instance-a-frontend-(Vote + Result)-faheem"
+    Name = "instance-a-frontend-(Vote + Result)-${var.signature}"
   }
 }
 
 # Instance B — (Redis + Worker)
 resource "aws_instance" "backend" {
-  ami                    = "ami-0a854fe96e0b45e4e"
-  instance_type          = "t2.micro"
+  ami                    = var.ami
+  instance_type          = var.instance_type
   subnet_id              = aws_subnet.private.id
   vpc_security_group_ids = [aws_security_group.faheme-redis-worker-sf.id]
-  key_name               = "faheem-key-frankfurt"
+  key_name               = var.key_name
 
   tags = {
-    Name = "instance-b-backend-(Redis + Worker)-faheem"
+    Name = "instance-b-backend-(Redis + Worker)-${var.signature}"
   }
 }
 
 # Instance C — (PostgreSQL)
 resource "aws_instance" "database" {
-  ami                    = "ami-0a854fe96e0b45e4e"
-  instance_type          = "t2.micro"
+  ami                    = var.ami
+  instance_type          = var.instance_type
   subnet_id              = aws_subnet.private.id
   vpc_security_group_ids = [aws_security_group.faheme-postgres-sf.id]
-  key_name               = "faheem-key-frankfurt"
+  key_name               = var.key_name
 
   tags = {
-    Name = "instance-c-database-(PostgreSQL)-faheem"
+    Name = "instance-c-database-(PostgreSQL)-${var.signature}"
   }
 }
 
