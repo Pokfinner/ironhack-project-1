@@ -1,0 +1,43 @@
+- name: Install Docker and run vote app (Ubuntu)
+  hosts: frontend
+  become: yes
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Install required packages
+      apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Pull Docker Image
+      docker_image:
+        name: cocomo1/vote
+        tag: latest
+        source: pull
+
+    - name: Run Container
+      docker_container:
+        name: client
+        image: cocomo1/vote:latest
+        state: started
+        restart_policy: always
+        ports:
+          - "80:80"
+
