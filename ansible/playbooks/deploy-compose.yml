@@ -1,0 +1,152 @@
+---
+- name: Setup Docker and Docker Compose on Ubuntu
+  hosts: all
+  become: yes
+  tasks:
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+        update_cache: yes
+
+    - name: Add Docker GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+
+    - name: Add Docker repository
+      apt_repository:
+        repo: "deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_lsb.codename }} stable"
+        state: present
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+        update_cache: yes
+
+    - name: Start and enable Docker service
+      systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Install Docker Compose plugin
+      apt:
+        name: docker-compose-plugin
+        state: present
+        update_cache: yes
+
+    - name: Ensure docker compose command works
+      command: docker compose version
+      register: compose_version
+
+    - debug:
+        var: compose_version.stdout
+
+    - name: Ensure docker group exists
+      group:
+        name: docker
+        state: present
+
+    - name: Add ubuntu user to docker group
+      user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+- name: Setup database
+  hosts: database
+  become: yes
+  tasks:
+    - name: Create application directory
+      file:
+        path: /home/ubuntu/healthchecks
+        state: directory
+
+    - name: Copy local file to remote
+      copy:
+        src:  ../../healthchecks/postgres.sh            # path on your control node
+        dest: /home/ubuntu/healthchecks/postgres.sh     # destination path on remote Ubuntu
+        owner: ubuntu                                   # optional: set owner
+        group: ubuntu                                   # optional: set group
+        mode: '0755'    
+
+    - name: Copy local file to remote
+      copy:
+        src:  ../docker-images/db.yml             # path on your control node
+        dest: /home/ubuntu/docker-compose.yml           # destination path on remote Ubuntu
+        owner: ubuntu                                   # optional: set owner
+        group: ubuntu                                   # optional: set group
+        mode: '0644'    
+
+    - name: Run docker compose with env vars
+      command: docker compose up -d
+      args:
+        chdir: /home/ubuntu
+
+
+
+- name: Setup backend
+  hosts: backend
+  become: yes
+  tasks:
+
+    - name: Create healthchecks directory
+      file:
+        path: /home/ubuntu/healthchecks
+        state: directory
+
+    - name: Copy healthcheck file
+      copy:
+        src:  ../../healthchecks/postgres.sh            # path on your control node
+        dest: /home/ubuntu/healthchecks/postgres.sh     # destination path on remote Ubuntu
+        owner: ubuntu                                   # optional: set owner
+        group: ubuntu                                   # optional: set group
+        mode: '0755'    
+
+    - name: Copy docker compose file
+      copy:
+        src:  ../docker-images/backend.yml        # path on your control node
+        dest: /home/ubuntu/docker-compose.yml     # destination path on remote Ubuntu
+        owner: ubuntu                             # optional: set owner
+        group: ubuntu                             # optional: set group
+        mode: '0644'    
+
+    - name: Run docker compose with env vars
+      command: docker compose up -d
+      args:
+        chdir: /home/ubuntu
+      environment:
+        REDIS_HOST: 10.0.2.171
+        REDIS_PORT: "6379"
+        PG_HOST: 10.0.2.53
+
+
+- name: Setup frontend
+  hosts: frontend
+  become: yes
+  tasks:
+    - name: Copy local file to remote
+      copy:
+        src:  ../docker-images/frontend.yml        # path on your control node
+        dest: /home/ubuntu/docker-compose.yml     # destination path on remote Ubuntu
+        owner: ubuntu                             # optional: set owner
+        group: ubuntu                             # optional: set group
+        mode: '0644'    
+
+    - name: Run docker compose with env vars
+      command: docker compose up -d
+      args:
+        chdir: /home/ubuntu
+      environment:
+        REDIS_HOST: 10.0.2.171
+        REDIS_PORT: "6379"
+        PG_HOST: 10.0.2.53
+
+
+ 

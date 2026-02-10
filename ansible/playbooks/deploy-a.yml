@@ -1,0 +1,47 @@
+- hosts: frontend
+  become: true
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Install required packages
+      apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+
+    - name: Ensure pip3 is installed
+      apt:
+        name: python3-pip
+        state: present
+
+    - name: Install Python Docker Compose library
+      pip:
+        name: docker-compose
+        executable: pip3
+
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Ensure back-tier network exists
+      docker_network:
+        name: back-tier
+        state: present
+
+    - name: Run docker compose up
+      community.docker.docker_compose:
+        project_src: /opt/apps
+        state: present

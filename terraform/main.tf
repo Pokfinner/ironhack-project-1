@@ -59,6 +59,20 @@ resource "aws_subnet" "private" {
   }
 }
 
+#########################
+# NAT Gateway 
+#########################
+
+resource "aws_eip" "nat" {
+  domain = "vpc"
+}
+
+resource "aws_nat_gateway" "nat" {
+  allocation_id = aws_eip.nat.id
+  subnet_id     = aws_subnet.public.id
+}
+
+
 ############################
 # Internet Gateway
 ############################
@@ -91,6 +105,12 @@ resource "aws_route_table" "private_rt" {
   vpc_id = aws_vpc.main.id
 }
 
+resource "aws_route" "private_default" {
+  route_table_id         = aws_route_table.private_rt.id
+  destination_cidr_block = "0.0.0.0/0"
+  nat_gateway_id         = aws_nat_gateway.nat.id
+}
+
 
 resource "aws_route_table_association" "private_assoc" {
   subnet_id      = aws_subnet.private.id
@@ -110,6 +130,14 @@ resource "aws_security_group" "faheem-vote-result-sg" {
     description = "HTTP"
     from_port   = 80
     to_port     = 80
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+ingress {
+    description = "HTTP"
+    from_port   = 81
+    to_port     = 81
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }
