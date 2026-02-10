@@ -1,0 +1,24 @@
+# vars.yml
+db_ip: "{{ hostvars['db-instance-1'].ansible_default_ipv4.address }}"
+backend_ip: "{{ hostvars['backend-instance-1'].ansible_default_ipv4.address }}"
+frontend_ip: "{{ hostvars['frontend-instance-1'].ansible_default_ipv4.address }}"
+
+#db_ip: "10.0.2.53"
+#backend_ip: "10.0.2.171"
+#frontend_ip: "18.196.81.108"
+
+REDIS_HOST: "{{ backend_ip }}"
+REDIS_PORT: "6379"
+
+DB_HOST: "{{db_ip}}"
+DB_PORT: "5432"
+DB_USERNAME: "postgres"
+DB_PASSWORD: "postgres"
+DB_NAME: "postgres"
+
+
+PG_HOST: "{{db_ip}}"
+PG_PORT: "{{PG_PORT}}"
+PG_USER: "postgres"
+PG_PASSWORD: "postgres"
+PG_DATABASE: "postgres"

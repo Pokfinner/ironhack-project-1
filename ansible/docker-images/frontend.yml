@@ -7,8 +7,8 @@ services:
     ports:
       - "80:80"
     environment:
-      REDIS_HOST: "10.0.2.171"
-      REDIS_PORT: "6379"
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
     networks:
       - back-tier
 
@@ -17,13 +17,17 @@ services:
     ports:
       - "81:80"
     environment:
-      PG_HOST: "10.0.2.53"
+      PG_HOST: ${PG_HOST}
       PG_PORT: "5432"
       PG_USER: "postgres"
       PG_PASSWORD: "postgres"
-      PG_DATABASE: "postgres"
+      PG_DATABASE: "postgres"  
+      
     networks:
       - back-tier
+
+volumes:
+  db-data:
 
 networks:
   back-tier:

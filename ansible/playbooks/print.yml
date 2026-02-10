@@ -1,0 +1,19 @@
+- name: Print variables and environment settings
+  hosts: all
+  vars_files:
+    - vars.yml
+  
+  tasks:
+    - name: Show all variables and env settings
+      debug:
+        msg:
+          - "db_ip: {{ db_ip }}"
+          - "backend_ip: {{ backend_ip }}"
+          - "frontend_ip: {{ frontend_ip }}"
+          - "REDIS_HOST: {{ REDIS_HOST }}"
+          - "REDIS_PORT: {{ REDIS_PORT }}"
+          - "DB_HOST: {{ DB_HOST }}"
+          - "DB_PORT: {{ DB_PORT }}"
+          - "DB_USERNAME: {{ DB_USERNAME }}"
+          - "DB_PASSWORD: {{ DB_PASSWORD }}"
+          - "DB_NAME: {{ DB_NAME }}"

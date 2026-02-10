@@ -1,0 +1,25 @@
+# Ironhack note - This file is for running in docker compose with prebuilt images
+# Use these if you're stuck, or if you want to start slowly migrating from external images into your own.
+
+services:
+  db:
+    image: postgres:15-alpine
+    ports:
+    - "5432:5432"
+    environment:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "postgres"
+    volumes:
+      - "db-data:/var/lib/postgresql/data"
+      - "./healthchecks:/healthchecks"
+    healthcheck:
+      test: /healthchecks/postgres.sh
+      interval: "5s"
+    networks:
+      - back-tier
+
+volumes:
+  db-data:
+
+networks:
+  back-tier:

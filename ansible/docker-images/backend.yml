@@ -6,13 +6,13 @@ services:
  #  build: ./worker
     image: cocomo1/worker:latest
     environment:
-      REDIS_HOST: "10.0.2.171"
-      REDIS_PORT: "6379"
-      PG_HOST: "10.0.2.53"
-      DB_HOST: "10.0.2.53"
-      DB_USERNAME: "postgres"
-      DB_PASSWORD: "postgres"
-      DB_NAME: "postgres"
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+      PG_HOST: ${DB_HOST}
+      DB_HOST: ${DB_HOST}
+      DB_USERNAME: ${DB_USERNAME}
+      DB_PASSWORD: ${DB_PASSWORD}
+      DB_NAME: ${DB_NAME}
     networks:
       - back-tier
 

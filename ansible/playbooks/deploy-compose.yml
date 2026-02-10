@@ -1,6 +1,7 @@
----
 - name: Setup Docker and Docker Compose on Ubuntu
   hosts: all
+  vars_files:
+    - vars.yml
   become: yes
   tasks:
     - name: Install required packages
@@ -60,7 +61,9 @@
         append: yes
 
 - name: Setup database
-  hosts: database
+  hosts: db
+  vars_files:
+    - vars.yml
   become: yes
   tasks:
     - name: Create application directory
@@ -88,11 +91,16 @@
       command: docker compose up -d
       args:
         chdir: /home/ubuntu
+      environment:
+        POSTGRES_USER: "{{DB_USERNAME}}"
+        POSTGRES_PASSWORD: "{{DB_PASSWORD}}"
 
 
 
 - name: Setup backend
   hosts: backend
+  vars_files:
+    - vars.yml
   become: yes
   tasks:
 
@@ -122,13 +130,19 @@
       args:
         chdir: /home/ubuntu
       environment:
-        REDIS_HOST: 10.0.2.171
-        REDIS_PORT: "6379"
-        PG_HOST: 10.0.2.53
+        REDIS_HOST: "{{REDIS_HOST}}"
+        REDIS_PORT: "{{REDIS_PORT}}"
+        PG_HOST: "{{DB_HOST}}"
+        DB_HOST: "{{DB_HOST}}"
+        DB_USERNAME: "{{DB_USERNAME}}"
+        DB_PASSWORD: "{{DB_PASSWORD}}"
+        DB_NAME: "{{DB_NAME}}"
 
 
 - name: Setup frontend
   hosts: frontend
+  vars_files:
+    - vars.yml
   become: yes
   tasks:
     - name: Copy local file to remote
@@ -144,9 +158,12 @@
       args:
         chdir: /home/ubuntu
       environment:
-        REDIS_HOST: 10.0.2.171
-        REDIS_PORT: "6379"
-        PG_HOST: 10.0.2.53
+        REDIS_HOST: "{{REDIS_HOST}}"
+        REDIS_PORT: "{{REDIS_PORT}}"
+        PG_HOST: "{{DB_HOST}}"
+        PG_PORT: "{{DB_PORT}}"
+        PG_USER: "{{DB_USERNAME}}"
+        PG_PASSWORD: "{{DB_PASSWORD}}"
+        PG_DATABASE: "{{DB_NAME}}"
 
 
- 
