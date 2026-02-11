@@ -1,0 +1,5 @@
+region = "eu-central-1"
+ami = "ami-0a854fe96e0b45e4e"
+instance_type = "t2.micro"
+key_name = "faheem-key-frankfurt"
+signature  = "faheem"

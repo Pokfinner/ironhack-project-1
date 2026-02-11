@@ -1,0 +1,33 @@
+# Ironhack note - This file is for running in docker compose with prebuilt images
+# Use these if you're stuck, or if you want to start slowly migrating from external images into your own.
+
+services:
+  vote:
+    image: cocomo1/vote:latest
+    ports:
+      - "80:80"
+    environment:
+      REDIS_HOST: ${REDIS_HOST}
+      REDIS_PORT: ${REDIS_PORT}
+    networks:
+      - back-tier
+
+  result:
+    image: cocomo1/result:latest
+    ports:
+      - "81:80"
+    environment:
+      PG_HOST: ${PG_HOST}
+      PG_PORT: "5432"
+      PG_USER: "postgres"
+      PG_PASSWORD: "postgres"
+      PG_DATABASE: "postgres"  
+      
+    networks:
+      - back-tier
+
+volumes:
+  db-data:
+
+networks:
+  back-tier:

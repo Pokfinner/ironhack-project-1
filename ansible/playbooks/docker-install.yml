@@ -1,0 +1,177 @@
+# -----------------------------------------              
+# ---------------- all ----------------          
+# ----------------------------------------- 
+- name: Install Docker and run vote app (Ubuntu)
+  hosts: all
+  become: yes
+
+  tasks:
+
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Upgrade all packages
+      apt:
+        upgrade: dist
+
+    - name: Install required packages
+      apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+
+    - name: Start and enable Docker
+      service:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Ensure back-tier network exists
+      docker_network:
+        name: back-tier
+        state: present
+
+# -----------------------------------------              
+# ---------------- backend ----------------          
+# -----------------------------------------        
+- name: Install on Backend 
+  hosts: backend
+  become: yes
+
+  tasks:
+
+    - name: Deploy Redis container
+      docker_container:
+        name: redis
+        image: redis:8.4.0-alpine
+        networks:
+          - name: back-tier
+        volumes:
+          - /opt/healthchecks:/healthchecks
+        healthcheck:
+          test: /healthchecks/redis.sh
+          interval: 5s
+        restart_policy: always
+        state: started
+    
+
+   
+
+# -----------------------------------------              
+# ---------------- DB ----------------          
+# -----------------------------------------        
+- name: PostgreSQL
+  hosts: db
+  become: yes
+
+  tasks:
+    
+    # -------------------------
+    # POSTGRES CONTAINER
+    # -------------------------
+
+    - name: Create postgres volume
+      community.docker.docker_volume:
+        name: postgres_data
+
+    - name: Run PostgreSQL container
+      community.docker.docker_container:
+        name: postgres-db
+        image: postgres:15-alpine
+        networks:
+          - name: back-tier
+        state: started
+        restart_policy: always
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+
+- name: Install on Backend 
+  hosts: backend
+  become: yes
+
+  tasks:
+# ---------------- WORKER ----------------
+
+    - name: Pull Docker Worker Image
+      docker_image:
+        name: cocomo1/worker
+        tag: latest
+        source: pull
+
+    - name: Run Container worker
+      docker_container:
+        name: worker
+        image: cocomo1/worker:latest
+        env:
+          DB_HOST: "10.0.2.167"
+          DB_USERNAME: "postgres"
+          DB_PASSWORD: "postgres"
+          DB_NAME: "postgres"
+          REDIS_HOST: "10.0.2.53"
+        networks:
+          - name: back-tier
+        state: started
+        restart_policy: always       
+# -----------------------------------------              
+# ---------------- frontend ----------------          
+# ----------------------------------------- 
+
+- name: Install Docker and run vote app (Ubuntu)
+  hosts: frontend
+  become: yes
+
+  tasks:
+    
+    # ---------------- VOTE ----------------
+    - name: Pull Docker Vote Image
+      docker_image:
+        name: cocomo1/vote
+        tag: latest
+        source: pull
+
+    - name: Run Container Vote
+      docker_container:
+        name: vote_client
+        image: cocomo1/vote:latest
+        networks:
+          - name: back-tier
+        state: started
+        restart_policy: always
+        ports:
+          - "80:80"
+        env:
+          REDIS_HOST: "10.0.2.167"
+          REDIS_PORT: "6379"
+
+    # ---------------- RESULT ----------------
+
+    - name: Pull Docker Result Image
+      docker_image:
+        name: cocomo1/result
+        tag: latest
+        source: pull
+
+    - name: Run Container Result
+      docker_container:
+        name: result_client
+        image: cocomo1/result:latest
+        networks:
+          - name: back-tier
+        state: started
+        restart_policy: always
+        ports:
+          - "81:80"
+        env:
+          PG_HOST: "10.0.2.53"  
+          PG_PORT: "5432"
+          PG_USER: "postgres"
+          PG_PASSWORD: "postgres"
+          PG_DATABASE: "postgres"
