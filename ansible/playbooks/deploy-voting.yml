@@ -1,0 +1,163 @@
+---
+- name: Desplegar Voting App completa en instancias EC2 (AWS)
+  hosts: all
+  become: yes
+  gather_facts: yes
+
+  vars_files:
+    - ../../group_vars/all.yml  
+
+  tasks:
+    # ────────────────────────────────────────────────
+    # 1. Instalación y configuración de Docker
+    # ────────────────────────────────────────────────
+    - name: Actualizar índice de paquetes apt
+      ansible.builtin.apt:
+        update_cache: yes
+        cache_valid_time: 3600
+
+    - name: Instalar Docker y docker-compose en Ubuntu
+      ansible.builtin.package:
+        name:
+          - docker.io
+          - docker-compose
+        state: present
+
+    - name: Asegurar que el servicio Docker esté activo y habilitado al arranque
+      ansible.builtin.systemd:
+        name: docker
+        state: started
+        enabled: yes
+
+    - name: Añadir usuario ubuntu al grupo docker (ejecutar sin sudo)
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: yes
+
+    # Reinicio de sesión para aplicar grupo docker (opcional pero recomendado)
+    - name: Reiniciar sesión del usuario para aplicar cambios de grupo
+      ansible.builtin.command: whoami
+      changed_when: false
+      become: no
+
+    # ────────────────────────────────────────────────
+    # 2. Descargar imágenes desde Docker Hub
+    # ────────────────────────────────────────────────
+    - name: Pull de imágenes necesarias desde Docker Hub
+      community.docker.docker_image:
+        name: "{{ item }}"
+        source: pull
+      loop:
+        - "{{ vote_image }}"
+        - "{{ result_image }}"
+        - "{{ worker_image }}"
+        - "redis:alpine"
+        - "postgres:15-alpine"
+      register: image_pull
+      retries: 3
+      delay: 5
+      until: image_pull is success
+
+    # ────────────────────────────────────────────────
+    # 3. Lanzar servicios en frontend (Vote + Result)
+    # ────────────────────────────────────────────────
+    - name: Desplegar Vote (frontend)
+      community.docker.docker_container:
+        name: vote
+        image: "{{ vote_image }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "8080:80"
+        env:
+          REDIS_HOST: "{{ backend_private_ip }}"
+          REDIS_PORT: "6379"
+      when: "'frontend' in group_names"
+
+    - name: Desplegar Result (frontend)
+      community.docker.docker_container:
+        name: result
+        image: "{{ result_image }}"
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "8081:80"
+        env:
+          POSTGRES_HOST: "{{ db_private_ip }}"
+          POSTGRES_PORT: "5432"
+          POSTGRES_USER: "{{ postgres_user }}"
+          POSTGRES_PASSWORD: "{{ postgres_password }}"
+          POSTGRES_DB: "{{ postgres_db }}"
+      when: "'frontend' in group_names"
+
+    # ────────────────────────────────────────────────
+    # 4. Lanzar servicios en backend (Redis + Worker)
+    # ────────────────────────────────────────────────
+    - name: Desplegar Redis (backend)
+      community.docker.docker_container:
+        name: redis
+        image: redis:alpine
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "6379:6379"   # ← Añade esto (mapea 6379 del contenedor al 6379 del host)
+        command: redis-server --bind 0.0.0.0 --protected-mode no
+      when: "'backend' in group_names"
+
+    - name: Desplegar Worker (backend)
+      community.docker.docker_container:
+        name: worker
+        image: "{{ worker_image }}"
+        state: started
+        restart_policy: unless-stopped
+        env:
+          REDIS_HOST: "redis"
+          REDIS_PORT: "6379"
+          DB_HOST: "{{ db_private_ip }}"
+          DB_PORT: "5432"
+          DB_USERNAME: "{{ postgres_user }}"
+          DB_PASSWORD: "{{ postgres_password }}"
+          DB_NAME: "{{ postgres_db }}"
+      when: "'backend' in group_names"
+
+    # ────────────────────────────────────────────────
+    # 5. Lanzar PostgreSQL en la instancia db
+    # ────────────────────────────────────────────────
+    - name: Desplegar PostgreSQL (db)
+      community.docker.docker_container:
+        name: postgres
+        image: postgres:15-alpine
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "5432:5432"
+        env:
+          POSTGRES_USER: "{{ postgres_user }}"
+          POSTGRES_PASSWORD: "{{ postgres_password }}"
+          POSTGRES_DB: "{{ postgres_db }}"
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+      when: "'db' in group_names"
+
+  # ────────────────────────────────────────────────
+  # Mensaje final para verificación
+  # ────────────────────────────────────────────────
+  post_tasks:
+    - name: Mensaje de finalización del despliegue
+      ansible.builtin.debug:
+        msg: |
+          ==================================================
+          Despliegue completado en todas las instancias.
+          
+          Accede a:
+            Vote:   http://{{ hostvars['frontend-instance-1']['ansible_host'] }}:8080
+            Result: http://{{ hostvars['frontend-instance-1']['ansible_host'] }}:8081
+          
+          Verifica logs si algo no funciona:
+            ssh frontend-instance-1 "docker logs vote"
+            ssh frontend-instance-1 "docker logs result"
+            ssh backend-instance-1  "docker logs worker"
+            ssh backend-instance-1  "docker logs redis"
+            ssh db-instance-1       "docker logs postgres"
+          ==================================================

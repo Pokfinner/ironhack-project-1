@@ -3,7 +3,7 @@
 
 services:
   vote:
-    image: pokfinner/vote:latest
+    image: cesarboada/vote:latest
  #  build: ./vote
     depends_on:
       redis:
@@ -14,7 +14,7 @@ services:
       - back-tier
 
   result:
-    image: pokfinner/result:latest
+    image: cesarboada/result:latest
  #  build: ./result
     depends_on:
       db:
@@ -26,7 +26,7 @@ services:
 
   worker:
  #  build: ./worker
-    image: pokfinner/worker:latest
+    image: cesarboada/worker:latest
     depends_on:
       redis:
         condition: service_healthy 

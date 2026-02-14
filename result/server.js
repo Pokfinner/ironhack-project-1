@@ -35,11 +35,11 @@ resultNamespace.on('connection', function (socket) {
 });
 
 // --- Example PostgreSQL logic (adjust as needed) ---
-var pgHost = process.env.PG_HOST || 'db';
-var pgPort = process.env.PG_PORT || 5432;
-var pgUser = process.env.PG_USER || 'postgres';
-var pgPassword = process.env.PG_PASSWORD || 'postgres';
-var pgDatabase = process.env.PG_DATABASE || 'postgres';
+var pgHost = process.env.POSTGRES_HOST || 'db';
+var pgPort = process.env.POSTGRES_PORT || 5432;
+var pgUser = process.env.POSTGRES_USER || 'postgres';
+var pgPassword = process.env.POSTGRES_PASSWORD || 'postgres';
+var pgDatabase = process.env.POSTGRES_DATABASE || 'postgres';
 
 var connectionString = `postgresql://${pgUser}:${pgPassword}@${pgHost}:${pgPort}/${pgDatabase}`;
 console.log(connectionString);

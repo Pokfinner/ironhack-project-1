@@ -8,6 +8,6 @@ build_property.PlatformNeutralAssembly =
 build_property.EnforceExtendedAnalyzerRules = 
 build_property._SupportedPlatformList = Linux,macOS,Windows
 build_property.RootNamespace = Worker
-build_property.ProjectDir = /Users/diogobarros/diogo_ironhack/example-voting-app/worker/
+build_property.ProjectDir = /home/cesarboada/ironhack-project-1/worker/
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 

@@ -1,0 +1,14 @@
+---
+# group_vars/all.yml
+
+docker_registry: "cesarboada"
+vote_image:   "{{ docker_registry }}/vote:latest"
+result_image: "{{ docker_registry }}/result:latest"
+worker_image: "{{ docker_registry }}/worker:latest"
+
+postgres_user:     "postgres"
+postgres_password: "postgres"         
+postgres_db:       "votes"
+
+backend_private_ip: "10.0.2.181"    
+db_private_ip:      "10.0.3.12"       
