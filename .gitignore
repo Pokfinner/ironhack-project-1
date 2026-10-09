@@ -1,0 +1,29 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+terraform.tfvars
+crash.log
+
+# SSH keys
+*.pem
+*.key
+
+# .NET
+bin/
+obj/
+
+# Python
+__pycache__/
+venv/
+.venv/
+
+# Node.js
+node_modules/
+
+# Ansible
+*.retry
+
+# OS files
+.DS_Store
+Thumbs.db
