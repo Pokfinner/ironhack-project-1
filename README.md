@@ -153,3 +153,15 @@ docker buildx build --platform linux/amd64 -t myorg/worker:latest ./worker
 This ensures the image is built for the desired platform.
 
 ---
+
+## How to build
+
+Build all three images (vote, result, worker) and push them to DockerHub:
+
+```bash
+docker login -u hserindik   # only once, use an access token as password
+./build.sh                  # builds and pushes with tags: latest, v1
+./build.sh v2               # builds and pushes with tags: latest, v2
+```
+
+Images on DockerHub: `hserindik/vote`, `hserindik/result`, `hserindik/worker`
