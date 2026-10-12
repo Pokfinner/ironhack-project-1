@@ -1,0 +1,28 @@
+- name: Install Docker on all servers
+  hosts: all
+  become: true
+
+  tasks:
+    - name: Update apt package index
+      ansible.builtin.apt:
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Install Docker and the Python Docker library
+      ansible.builtin.apt:
+        name:
+          - docker.io
+          - python3-docker
+        state: present
+
+    - name: Make sure Docker is running and starts on boot
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Add the ubuntu user to the docker group
+      ansible.builtin.user:
+        name: ubuntu
+        groups: docker
+        append: true
