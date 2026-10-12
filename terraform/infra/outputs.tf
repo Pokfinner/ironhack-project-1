@@ -1,0 +1,19 @@
+output "frontend_public_ip" {
+  description = "A: public IP (browser + SSH)"
+  value       = aws_instance.frontend.public_ip
+}
+
+output "frontend_private_ip" {
+  description = "A: private IP"
+  value       = aws_instance.frontend.private_ip
+}
+
+output "backend_private_ip" {
+  description = "B: private IP (REDIS_HOST for Vote)"
+  value       = aws_instance.backend.private_ip
+}
+
+output "db_private_ip" {
+  description = "C: private IP (DB_HOST / PG_HOST)"
+  value       = aws_instance.db.private_ip
+}
