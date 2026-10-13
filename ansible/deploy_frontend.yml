@@ -1,0 +1,26 @@
+- name: Deploy Vote and Result on server A
+  hosts: frontend
+  become: true
+
+  tasks:
+    - name: Run the Vote container
+      community.docker.docker_container:
+        name: vote
+        image: hserindik/vote:v1
+        state: started
+        restart_policy: unless-stopped
+        env:
+          REDIS_HOST: "{{ backend_private_ip }}"
+        ports:
+          - "8080:80"
+
+    - name: Run the Result container
+      community.docker.docker_container:
+        name: result
+        image: hserindik/result:v1
+        state: started
+        restart_policy: unless-stopped
+        env:
+          PG_HOST: "{{ db_private_ip }}"
+        ports:
+          - "8081:80"
