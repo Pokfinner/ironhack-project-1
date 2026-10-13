@@ -1,0 +1,22 @@
+- name: Deploy PostgreSQL on server C 
+  hosts: db
+  become: true
+
+  tasks:
+    - name: Create a volume for PostgreSQL data
+      community.docker.docker_volume:
+        name: db-data
+    
+    - name: Run the PostgreSQL container 
+      community.docker.docker_container:
+        name: db
+        image: postgres:15-alpine
+        state: started
+        restart_policy: unless-stopped
+        env:
+          POSTGRES_USER: "postgres"
+          POSTGRES_PASSWORD: "postgres"
+        ports:
+          - "5432:5432"
+        volumes:
+          - db-data:/var/lib/postgresql/data
