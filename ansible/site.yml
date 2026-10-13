@@ -1,0 +1,5 @@
+# Deploy the whole Voting App, in the right order
+- import_playbook: install_docker.yml
+- import_playbook: deploy_db.yml
+- import_playbook: deploy_backend.yml
+- import_playbook: deploy_frontend.yml
