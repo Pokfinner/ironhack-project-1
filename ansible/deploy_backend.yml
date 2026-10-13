@@ -1,0 +1,32 @@
+- name: Deploy Redis and Worker on server B
+  hosts: backend
+  become: true
+
+  tasks: 
+    - name: Create a Docker network for Redis and Worker
+      community.docker.docker_network:
+        name: backend-net
+
+    - name: Run the Redis container
+      community.docker.docker_container:
+        name: redis
+        image: redis:alpine
+        state: started
+        restart_policy: unless-stopped
+        ports:
+          - "6379:6379"
+        networks:
+          - name: backend-net
+
+    - name: Run the Worker container
+      community.docker.docker_container:
+        name: worker
+        image: hserindik/worker:v1
+        state: started
+        restart_policy: unless-stopped
+        env:
+          DB_HOST: "{{ db_private_ip }}"
+          REDIS_HOST: "redis"
+        networks:
+          - name: backend-net
+  

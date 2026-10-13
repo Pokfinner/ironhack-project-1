@@ -1,0 +1,3 @@
+# Private IPs from "terraform output" - update after every terraform apply
+backend_private_ip: "10.0.2.6"
+db_private_ip: "10.0.3.29"
