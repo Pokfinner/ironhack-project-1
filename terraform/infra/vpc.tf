@@ -111,3 +111,38 @@ resource "aws_route_table_association" "private_db" {
   subnet_id      = aws_subnet.private_db.id
   route_table_id = aws_route_table.private.id
 }
+
+# ---------- Load Balancer: new subnets ----------
+# Second public subnet in another AZ (ALB needs at least 2 AZs)
+resource "aws_subnet" "public_b" {
+  vpc_id                  = aws_vpc.main.id
+  cidr_block              = "10.0.4.0/24"
+  availability_zone       = "us-east-1b"
+  map_public_ip_on_launch = true
+
+  tags = {
+    Name = "hserindik-voting-app-public_b"
+  }
+}
+
+resource "aws_route_table_association" "public_b" {
+  subnet_id      = aws_subnet.public_b.id
+  route_table_id = aws_route_table.public.id
+}
+
+# Private subnet for the frontend server (A)
+
+resource "aws_subnet" "private_frontend" {
+  vpc_id            = aws_vpc.main.id
+  cidr_block        = "10.0.5.0/24"
+  availability_zone = "us-east-1a"
+
+  tags = {
+    Name = "hserindik-voting-app-private-frontend"
+  }
+}
+
+resource "aws_route_table_association" "private_frontend" {
+  subnet_id      = aws_subnet.private_frontend.id
+  route_table_id = aws_route_table.private.id
+}

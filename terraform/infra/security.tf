@@ -113,3 +113,30 @@ resource "aws_security_group" "db" {
     Name = "hserindik-voting-app-db-sg"
   }
 }
+
+# ---------- SG: Bastion (SSH only) ----------
+resource "aws_security_group" "bastion" {
+  name        = "hserindik-voting-app-bastion-sg"
+  description = "SSH only from my IP"
+  vpc_id      = aws_vpc.main.id
+
+  ingress {
+    description = "SSH only from my IP"
+    from_port   = 22
+    to_port     = 22
+    protocol    = "tcp"
+    cidr_blocks = [var.my_ip]
+  }
+
+  egress {
+    description = "Allow all outbound traffic"
+    from_port   = 0
+    to_port     = 0
+    protocol    = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  tags = {
+    Name = "hserindik-voting-app-bastion-sg"
+  }
+}
