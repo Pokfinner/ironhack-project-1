@@ -5,27 +5,26 @@ resource "aws_security_group" "frontend" {
   vpc_id      = aws_vpc.main.id
 
   ingress {
-    description = "Vote from the internet"
+    description = "Vote only from the ALB"
     from_port   = 8080
     to_port     = 8080
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    security_groups = [aws_security_group.alb.id]
   }
 
   ingress {
-    description = "Result from the internet"
+    description = "Result only from the ALB"
     from_port   = 8081
     to_port     = 8081
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    security_groups = [aws_security_group.alb.id]
   }
 
   ingress {
-    description = "SSH only from my IP(old) and the bastion (new)"
+    description = "SSH only from the bastion"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
-    cidr_blocks = [var.my_ip]
     security_groups = [aws_security_group.bastion.id]
   }
 
@@ -57,11 +56,11 @@ resource "aws_security_group" "backend" {
   }
 
   ingress {
-    description     = "SSH from A(old) and the bastion (new)"
+    description     = "SSH from the bastion"
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    security_groups = [aws_security_group.frontend.id, aws_security_group.bastion.id]
+    security_groups = [aws_security_group.bastion.id]
   }
 
   egress {
@@ -95,11 +94,11 @@ resource "aws_security_group" "db" {
   }
 
   ingress {
-    description     = "SSH from A (old) and the bastion (new)"
+    description     = "SSH from the bastion"
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    security_groups = [aws_security_group.frontend.id, aws_security_group.bastion.id]
+    security_groups = [aws_security_group.bastion.id]
   }
 
   egress {

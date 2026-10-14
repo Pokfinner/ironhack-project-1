@@ -1,8 +1,3 @@
-output "frontend_public_ip" {
-  description = "A: public IP (browser + SSH)"
-  value       = aws_instance.frontend.public_ip
-}
-
 output "frontend_private_ip" {
   description = "A: private IP"
   value       = aws_instance.frontend.private_ip
