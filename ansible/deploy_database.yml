@@ -1,0 +1,38 @@
+---
+- name: Pull and run postgress database from docker hub to database EC2 instance 
+  hosts: database
+  become: true
+
+  vars_files:
+  - secrets.yml
+  vars:
+    app_image: postgres
+    app_tag: 16-alpine
+    container_port: 5432
+    host_port: 5432
+
+  tasks:
+    - name: Pull the image for datatbase
+      community.docker.docker_image:
+        name: "{{ app_image }}:{{ app_tag }}"
+        source: pull
+        force_source: true
+
+    - name: Run the container
+      community.docker.docker_container:
+        name: postgres
+        image: "{{ app_image }}:{{ app_tag }}"
+        state: started
+        recreate: true
+        restart_policy: unless-stopped
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+        env:
+          POSTGRES_USER: "{{ postgres_user }}"
+          POSTGRES_DB: "{{ postgress_db }}"
+          POSTGRES_PASSWORD: "{{ postgress_password }}"
+        volumes:
+          - postgres_data:/var/lib/postgresql/data
+      no_log: true
+
+      

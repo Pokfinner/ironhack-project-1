@@ -1,0 +1,55 @@
+---
+- name: Pull and run redis and worker app from docker hub to EC2 instance 
+  hosts: backend
+  become: true
+
+  vars_files:
+  - secrets.yml
+  vars:
+    app_image_app: yogeshrathore29/worker-app
+    app_tag_app: latest
+    app_image_redis: redis
+    app_tag_redis: 7-alpine
+    container_port: 6379
+    host_port: 6379
+
+  tasks:
+    - name: Pull the image for worker app
+      community.docker.docker_image:
+        name: "{{ app_image_app }}:{{ app_tag_app }}"
+        source: pull
+        force_source: true
+
+    - name: Pull the image for Redis 
+      community.docker.docker_image:
+        name: "{{ app_image_redis }}:{{ app_tag_redis }}"
+        source: pull
+        force_source: true
+
+    - name: Run the worker app container
+      community.docker.docker_container:
+        name: worker-app
+        image: "{{ app_image_app }}:{{ app_tag_app }}"
+        state: started
+        recreate: true
+        restart_policy: unless-stopped
+        env:
+          DB_HOST: "{{ db_host }}"
+          DB_USERNAME: "{{ postgres_user }}"
+          DB_PASSWORD: "{{ postgress_password }}"
+          DB_NAME: "{{ postgress_db }}"
+          REDIS_HOST: "{{ redis_host }}"
+      no_log: true
+
+      
+    - name: Run the redis container
+      community.docker.docker_container:
+        name:  redis
+        image: "{{ app_image_redis }}:{{ app_tag_redis }}"
+        state: started
+        recreate: true
+        restart_policy: unless-stopped
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+      no_log: true
+      

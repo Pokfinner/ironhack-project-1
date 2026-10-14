@@ -1,0 +1,38 @@
+---
+- name: Pull and run voting app from docker hub to EC2 instance 
+  hosts: frontend
+  become: true
+
+  vars_files:
+  - secrets.yml
+  vars:
+    app_image: yogeshrathore29/voting-app
+    app_tag: latest
+    container_port: 80
+    host_port: 80
+
+  tasks:
+    - name: Pull the image for voting app
+      community.docker.docker_image:
+        name: "{{ app_image }}:{{ app_tag }}"
+        source: pull
+        force_source: true
+
+    - name: Run the container
+      community.docker.docker_container:
+        name: voting-app
+        image: "{{ app_image }}:{{ app_tag }}"
+        state: started
+        recreate: true
+        restart_policy: unless-stopped
+        ports:
+          - "{{ host_port }}:{{ container_port }}"
+        env:
+          REDIS_HOST: "{{ redis_host }}"
+          REDIS_PORT: "6379"
+      no_log: true
+
+    - name: Wait until the app port is listening
+      ansible.builtin.wait_for:
+        port: "{{ host_port }}"
+        timeout: 20

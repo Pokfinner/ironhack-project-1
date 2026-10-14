@@ -1,0 +1,67 @@
+---
+- name: Install and configure Docker on Amazon Linux EC2
+  hosts: all
+  become: true
+
+  vars:
+    docker_users:
+      - ec2-user
+    docker_daemon_config:
+      log-driver: json-file
+      log-opts:
+        max-size: "10m"
+        max-file: "3"
+
+  tasks:
+    # Amazon Linux 2023 -> dnf. On Amazon Linux 2, change ansible.builtin.dnf to ansible.builtin.yum.
+    - name: Install Docker
+      ansible.builtin.dnf:
+        name: docker
+        state: present
+        update_cache: true
+
+    - name: Ensure /etc/docker exists
+      ansible.builtin.file:
+        path: /etc/docker
+        state: directory
+        mode: "0755"
+
+    - name: Configure Docker daemon (log rotation)
+      ansible.builtin.copy:
+        content: "{{ docker_daemon_config | to_nice_json }}"
+        dest: /etc/docker/daemon.json
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart Docker
+
+    - name: Enable and start Docker
+      ansible.builtin.systemd:
+        name: docker
+        enabled: true
+        state: started
+
+    - name: Add users to the docker group
+      ansible.builtin.user:
+        name: "{{ item }}"
+        groups: docker
+        append: true
+      loop: "{{ docker_users }}"
+
+    - name: Reset SSH connection so new group membership applies
+      ansible.builtin.meta: reset_connection
+
+    - name: Verify Docker is working
+      ansible.builtin.command: docker version --format '{{ "{{.Server.Version}}" }}'
+      register: docker_version
+      changed_when: false
+
+    - name: Show Docker version
+      ansible.builtin.debug:
+        msg: "Docker server version {{ docker_version.stdout }}"
+
+  handlers:
+    - name: Restart Docker
+      ansible.builtin.systemd:
+        name: docker
+        state: restarted
