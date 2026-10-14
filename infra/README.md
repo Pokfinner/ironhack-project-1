@@ -28,33 +28,41 @@ Run the commands below from the directory that contains the Terraform files.
 
 Downloads the required providers and sets up the working directory.
 
+```bash
 terraform init
+```
 
 ### 2. Format the code
 
 Formats the configuration files to the standard style.
 
+```bash
 terraform fmt
+```
 
 ### 3. Validate the configuration
 
 Checks the configuration for syntax errors and internal consistency.
 
+```bash
 terraform validate
+```
 
 ### 4. Review the plan
 
 Shows what Terraform will create, change, or destroy. Review it before applying.
 
+```bash
 terraform plan
-
+```
 
 ### 5. Apply the changes
 
 Creates the infrastructure.
 
-
+```bash
 terraform apply
+```
 
 
 Terraform asks for confirmation before making changes. Type `yes` to proceed.
@@ -67,7 +75,9 @@ Make sure all fields are properly filled in before you run `terraform plan` and 
 
 To remove everything this project created:
 
+```bash
 terraform destroy
+```
 
 ## Additional point Review the list of resources carefully before confirming, because this deletes them.
 Include a .gitignore entry for Terraform state and sensitive variable files, such as .terraform/, *.tfstate, *.tfstate.*, and *.tfvars (while retaining any non-sensitive example files such as terraform.tfvars.example).
