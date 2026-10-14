@@ -21,11 +21,12 @@ resource "aws_security_group" "frontend" {
   }
 
   ingress {
-    description = "SSH only from my IP"
+    description = "SSH only from my IP(old) and the bastion (new)"
     from_port   = 22
     to_port     = 22
     protocol    = "tcp"
     cidr_blocks = [var.my_ip]
+    security_groups = [aws_security_group.bastion.id]
   }
 
   egress {
@@ -56,11 +57,11 @@ resource "aws_security_group" "backend" {
   }
 
   ingress {
-    description     = "SSH from bastion (frontend)"
+    description     = "SSH from A(old) and the bastion (new)"
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    security_groups = [aws_security_group.frontend.id]
+    security_groups = [aws_security_group.frontend.id, aws_security_group.bastion.id]
   }
 
   egress {
@@ -94,11 +95,11 @@ resource "aws_security_group" "db" {
   }
 
   ingress {
-    description     = "SSH from bastion (frontend)"
+    description     = "SSH from A (old) and the bastion (new)"
     from_port       = 22
     to_port         = 22
     protocol        = "tcp"
-    security_groups = [aws_security_group.frontend.id]
+    security_groups = [aws_security_group.frontend.id, aws_security_group.bastion.id]
   }
 
   egress {

@@ -3,9 +3,10 @@
 resource "local_file" "ansible_inventory" {
   filename = "${path.module}/../../ansible/inventory.ini"
   content = templatefile("${path.module}/templates/inventory.tftpl", {
-    frontend_public_ip = aws_instance.frontend.public_ip
-    backend_private_ip = aws_instance.backend.private_ip
-    db_private_ip      = aws_instance.db.private_ip
+    bastion_public_ip   = aws_instance.bastion.public_ip
+    frontend_private_ip = aws_instance.frontend.private_ip
+    backend_private_ip  = aws_instance.backend.private_ip
+    db_private_ip       = aws_instance.db.private_ip
   })
 }
 
