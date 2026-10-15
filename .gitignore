@@ -1,0 +1,26 @@
+# macOS and editors
+.DS_Store
+.idea/
+.vscode/
+
+# .NET build output (the worker)
+worker/bin/
+worker/obj/
+
+# Node (result)
+node_modules/
+
+# Python (vote)
+__pycache__/
+.venv/
+venv/
+
+# Terraform: state, local caches and per-machine inputs never go to git.
+# .terraform.lock.hcl is committed on purpose, because HashiCorp recommends it:
+# https://developer.hashicorp.com/terraform/language/files/dependency-lock
+.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
+*.tfvars.json
