@@ -10,6 +10,8 @@ services:
         condition: service_healthy 
     ports:
       - "8080:80"
+    environment:
+      VOTING_MODE: ${VOTING_MODE:-every-click}
     networks:
       - back-tier
 
@@ -32,6 +34,8 @@ services:
         condition: service_healthy 
       db:
         condition: service_healthy 
+    environment:
+      VOTING_MODE: ${VOTING_MODE:-every-click}
     networks:
       - back-tier
 

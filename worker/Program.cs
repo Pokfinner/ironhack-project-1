@@ -26,6 +26,16 @@ namespace Worker
                 var dbName = Environment.GetEnvironmentVariable("DB_NAME") ?? "postgres";
                 
                 var redisHost = Environment.GetEnvironmentVariable("REDIS_HOST") ?? "redis";
+                var votingMode = Environment.GetEnvironmentVariable("VOTING_MODE");
+                if (string.IsNullOrEmpty(votingMode))
+                {
+                    votingMode = "every-click";
+                }
+                if (votingMode != "every-click" && votingMode != "one-per-voter")
+                {
+                    Console.Error.WriteLine($"VOTING_MODE must be 'every-click' or 'one-per-voter', got '{votingMode}'");
+                    return 1;
+                }
 
                 // Construct the connection strings
                 var pgConnectionString = $"Server={dbHost};Username={dbUsername};Password={dbPassword};Database={dbName}";
@@ -118,7 +128,14 @@ namespace Worker
 
                     try
                     {
-                        UpdateVote(pgsql!, vote.voter_id, vote.vote);
+                        if (votingMode == "one-per-voter")
+                        {
+                            ReplaceVote(pgsql!, vote.voter_id, vote.vote);
+                        }
+                        else
+                        {
+                            UpdateVote(pgsql!, vote.voter_id, vote.vote);
+                        }
                         lastFailedVote = null;
                         strikes = 0;
                     }
@@ -264,6 +281,30 @@ namespace Worker
             {
                 command.Dispose();
             }
+        }
+
+        private static void ReplaceVote(NpgsqlConnection connection, string voterId, string vote)
+        {
+            using var transaction = connection.BeginTransaction();
+
+            using (var delete = connection.CreateCommand())
+            {
+                delete.Transaction = transaction;
+                delete.CommandText = "DELETE FROM votes WHERE id = @id";
+                delete.Parameters.AddWithValue("@id", voterId);
+                delete.ExecuteNonQuery();
+            }
+
+            using (var insert = connection.CreateCommand())
+            {
+                insert.Transaction = transaction;
+                insert.CommandText = "INSERT INTO votes (id, vote) VALUES (@id, @vote)";
+                insert.Parameters.AddWithValue("@id", voterId);
+                insert.Parameters.AddWithValue("@vote", vote);
+                insert.ExecuteNonQuery();
+            }
+
+            transaction.Commit();
         }
     }
 }
