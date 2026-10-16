@@ -1,5 +1,4 @@
 var express = require('express'),
-    async = require('async'),
     { Pool } = require('pg'),
     cookieParser = require('cookie-parser'),
     path = require('path'),
@@ -47,30 +46,23 @@ console.log(connectionString);
 var { Pool } = require('pg');
 var pool = new Pool({ connectionString: connectionString });
 
-async.retry(
-  { times: 1000, interval: 1000 },
-  function (callback) {
-    pool.connect(function (err, client, done) {
-      if (err) {
-        console.error("Waiting for db");
-      }
-      callback(err, client);
-    });
-  },
-  function (err, client) {
-    if (err) {
-      return console.error("Giving up");
-    }
-    console.log("Connected to db");
-    getVotes(client);
-  }
-);
+// An idle client whose connection drops emits 'error' on the pool; with no
+// listener, Node treats it as uncaught and ends the process.
+pool.on('error', function (err) {
+  console.error("Idle db connection failed: " + err.message);
+});
 
-function getVotes(client) {
-  client.query('SELECT vote, COUNT(id) AS count FROM votes GROUP BY vote', [], function (err, result) {
+var connected = false;
+
+function getVotes() {
+  pool.query('SELECT vote, COUNT(id) AS count FROM votes GROUP BY vote', [], function (err, result) {
     if (err) {
       console.error("Error performing query: " + err);
     } else {
+      if (!connected) {
+        console.log("Connected to db");
+        connected = true;
+      }
       var votes = collectVotesFromResult(result);
 
       // Broadcast to both namespaces
@@ -78,10 +70,12 @@ function getVotes(client) {
       resultNamespace.emit("scores", JSON.stringify(votes));
     }
 
-    // Repeat periodically
-    setTimeout(function () { getVotes(client); }, 1000);
+    // Repeat periodically, after a success or a failure alike
+    setTimeout(getVotes, 1000);
   });
 }
+
+getVotes();
 
 function collectVotesFromResult(result) {
   var votes = { a: 0, b: 0 };
