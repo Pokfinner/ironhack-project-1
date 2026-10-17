@@ -50,12 +50,13 @@ services:
       - back-tier
 
   db:
-    image: postgres:15-alpine
+    image: postgres:18-alpine
     environment:
       POSTGRES_USER: "postgres"
       POSTGRES_PASSWORD: "postgres"
     volumes:
-      - "db-data:/var/lib/postgresql/data"
+      # Postgres 18 and later keep data in a versioned subfolder of /var/lib/postgresql
+      - "db-data:/var/lib/postgresql"
       - "./healthchecks:/healthchecks"
     healthcheck:
       test: /healthchecks/postgres.sh

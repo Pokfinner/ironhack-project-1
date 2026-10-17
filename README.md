@@ -114,7 +114,7 @@ You can build each service with Docker and run them individually:
   
 - **Postgres**:
   ```bash
-  docker run --name db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:15-alpine
+  docker run --name db -e POSTGRES_USER=postgres -e POSTGRES_PASSWORD=postgres -p 5432:5432 postgres:18-alpine
   ```
 
 - **Result (Node.js)**:
