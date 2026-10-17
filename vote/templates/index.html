@@ -19,7 +19,11 @@
           <button id="b" type="submit" name="vote" class="b" value="b">{{option_b}}</button>
         </form>
         <div id="tip">
+          {% if one_per_voter %}
           (Tip: you can change your vote)
+          {% else %}
+          (Tip: every click counts as a vote)
+          {% endif %}
         </div>
         <div id="hostname">
           Processed by container ID {{hostname}}

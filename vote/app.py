@@ -9,6 +9,9 @@ import logging
 # Read options and Redis configuration from environment variables
 option_a = os.getenv('OPTION_A', "Cats")
 option_b = os.getenv('OPTION_B', "Dogs")
+voting_mode = os.getenv('VOTING_MODE') or 'every-click'
+if voting_mode not in ('every-click', 'one-per-voter'):
+    raise ValueError(f"VOTING_MODE must be 'every-click' or 'one-per-voter', got '{voting_mode}'")
 redis_host = os.getenv('REDIS_HOST', 'redis')  # Default to 'redis' for compatibility
 redis_port = int(os.getenv('REDIS_PORT', 6379))  # Default Redis port is 6379
 hostname = socket.gethostname()
@@ -46,6 +49,7 @@ def hello():
         option_b=option_b,
         hostname=hostname,
         vote=vote,
+        one_per_voter=(voting_mode == 'one-per-voter'),
     ))
     resp.set_cookie('voter_id', voter_id)
     return resp
