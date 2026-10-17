@@ -126,6 +126,8 @@ You can build each service with Docker and run them individually:
 
 ### Using Docker Compose
 
+Before the first start, create a file named `.env` next to `docker-compose.yml` with one line, `DB_PASSWORD=` followed by a password of your choice (letters and digits only). Save it as plain text with exactly that name. Do not commit this file. Compose will not start without it, and to change the password later run `docker compose down -v` first.
+
 The easiest way to run the entire stack is via Docker Compose. From the project root directory:
 
 ```bash
