@@ -24,5 +24,8 @@ ENV DB_PASSWORD=postgres
 ENV DB_NAME=postgres
 ENV REDIS_HOST=redis
 
+# app, the unprivileged user the .NET image ships
+USER 1654
+
 # Define the entry point
 ENTRYPOINT ["dotnet", "Worker.dll"]
