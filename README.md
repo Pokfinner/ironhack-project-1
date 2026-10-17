@@ -14,7 +14,7 @@ The voting application includes:
 
 - **Vote (Python)**: A Python Flask-based web application where users can vote between two options.
 - **Redis (in-memory queue)**: Collects incoming votes and temporarily stores them.
-- **Worker (.NET)**: A .NET 7.0-based service that consumes votes from Redis and persists them into a database.
+- **Worker (.NET)**: A .NET 10-based service that consumes votes from Redis and persists them into a database.
 - **Postgres (Database)**: Stores votes for long-term persistence.
 - **Result (Node.js)**: A Node.js/Express web application that displays the vote counts in real time.
 
@@ -55,7 +55,7 @@ By dealing with this “messy” environment, you’ll build real-world problem-
 
 ### Running the Worker (C#/.NET) Locally (No Docker)
 
-1. Ensure .NET 7.0 SDK is installed.
+1. Ensure the .NET 10 SDK is installed (the version the Docker image uses).
 2. Navigate to `worker`:
    ```bash
    cd worker
