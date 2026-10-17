@@ -35,7 +35,7 @@ By dealing with this “messy” environment, you’ll build real-world problem-
 
 ### Running the Vote Service (Python) Locally (No Docker)
 
-1. Ensure you have Python 3.10+ installed.
+1. Ensure you have Python 3.15 installed (the version the Docker image uses).
 2. Navigate to the `vote` directory:
    ```bash
    cd vote
