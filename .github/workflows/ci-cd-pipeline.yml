@@ -1,0 +1,58 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ latin ]
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write  # For AWS OIDC
+      contents: read
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and Push Vote
+        run: |
+          cd vote
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/vote:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/vote:latest
+
+      - name: Build and Push Result
+        run: |
+          cd result
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/result:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/result:latest
+
+      - name: Build and Push Worker
+        run: |
+          cd worker
+          docker build -t ${{ secrets.DOCKER_USERNAME }}/worker:latest .
+          docker push ${{ secrets.DOCKER_USERNAME }}/worker:latest
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::686699774218:role/github-actions-eks-role
+          aws-region: ${{ secrets.AWS_REGION }}
+
+      - name: Install eksctl
+        run: |
+          curl --silent --location "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_$(uname -s)_amd64.tar.gz" | tar xz -C /tmp
+          sudo mv /tmp/eksctl /usr/local/bin
+
+      - name: Update Kubeconfig
+        run: eksctl utils write-kubeconfig --cluster voting-app-cluster --region ${{ secrets.AWS_REGION }}
+
+      - name: Deploy Kubernetes Manifests
+        run: kubectl apply -R -f k8s/  # Asumiendo YAMLs están en carpeta k8s/

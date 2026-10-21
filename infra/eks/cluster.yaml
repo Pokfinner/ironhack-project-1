@@ -1,0 +1,48 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+
+metadata:
+  name: voting-app-cluster
+  region: sa-east-1          # cambia si prefieres otra región (ej: eu-west-1)
+  version: "1.31"            # o la versión más reciente soportada
+
+managedNodeGroups:
+  - name: standard-workers
+    instanceType: t2.small
+    minSize: 1
+    maxSize: 3
+    desiredCapacity: 2
+    volumeSize: 30
+    volumeType: gp3
+    ssh:
+      allow: false
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+
+  - name: standard-workers-medium
+    instanceType: t3.medium
+    minSize: 1
+    maxSize: 3
+    desiredCapacity: 2
+    volumeSize: 30
+    volumeType: gp3
+    ssh:
+      allow: false
+    iam:
+      withAddonPolicies:
+        autoScaler: true
+        externalDNS: true
+        certManager: true
+
+addons:
+  - name: vpc-cni
+  - name: coredns
+  - name: kube-proxy
+  - name: aws-ebs-csi-driver
+  - name: eks-pod-identity-agent
+
+addonsConfig:
+  autoApplyPodIdentityAssociations: true
