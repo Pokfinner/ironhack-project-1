@@ -21,6 +21,8 @@ services:
     depends_on:
       db:
         condition: service_healthy 
+    environment:
+      PG_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in a .env file next to docker-compose.yml}
     ports:
       - "8081:80"
     networks:
@@ -36,6 +38,7 @@ services:
         condition: service_healthy 
     environment:
       VOTING_MODE: ${VOTING_MODE:-every-click}
+      DB_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in a .env file next to docker-compose.yml}
     networks:
       - back-tier
 
@@ -53,7 +56,7 @@ services:
     image: postgres:15-alpine
     environment:
       POSTGRES_USER: "postgres"
-      POSTGRES_PASSWORD: "postgres"
+      POSTGRES_PASSWORD: ${DB_PASSWORD:?Set DB_PASSWORD in a .env file next to docker-compose.yml}
     volumes:
       - "db-data:/var/lib/postgresql/data"
       - "./healthchecks:/healthchecks"
