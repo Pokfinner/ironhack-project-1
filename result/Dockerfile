@@ -27,5 +27,8 @@ ENV PORT=80 \
 
 EXPOSE 80
 
+# node, the unprivileged user the Node image ships
+USER 1000
+
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["node", "server.js"]
