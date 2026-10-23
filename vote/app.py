@@ -16,7 +16,8 @@ redis_host = os.getenv('REDIS_HOST', 'redis')  # Default to 'redis' for compatib
 redis_port = int(os.getenv('REDIS_PORT', 6379))  # Default Redis port is 6379
 hostname = socket.gethostname()
 
-app = Flask(__name__)
+# Serve static files under /vote, so an Ingress that routes only /vote to this app still reaches them
+app = Flask(__name__, static_url_path='/vote/static')
 
 gunicorn_error_logger = logging.getLogger('gunicorn.error')
 app.logger.handlers.extend(gunicorn_error_logger.handlers)
