@@ -1,0 +1,22 @@
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: de.gerardogmilian@gmail.com
+    privateKeySecretRef:
+      name: letsencrypt-prod
+    preferredChain: "ISRG Root X1"
+    solvers:
+      - dns01:
+          route53:
+            region: sa-east-1
+            accessKeyID: AKIAZ7YT7AEFB5WDTS7V
+            secretAccessKeySecretRef:
+              name: route53-secret
+              key: secret-access-key
+        selector:
+          dnsZones:
+            - "app-vote-latin.com"

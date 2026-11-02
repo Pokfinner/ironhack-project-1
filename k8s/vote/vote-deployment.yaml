@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vote-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vote
+  template:
+    metadata:
+      labels:
+        app: vote
+    spec:
+      containers:
+      - name: vote
+        image: cesarboada/vote:latest  # Use your Docker Hub image
+        ports:
+          - containerPort: 80
+        env:
+          - name: REDIS_HOST
+            value: redis-service
