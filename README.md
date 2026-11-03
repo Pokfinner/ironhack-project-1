@@ -75,7 +75,7 @@ By dealing with this “messy” environment, you’ll build real-world problem-
 
 ### Running the Result Service (Node.js) Locally (No Docker)
 
-1. Ensure Node.js 18+ is installed.
+1. Ensure Node.js 26 is installed (the version the Docker image uses).
 2. Navigate to `result`:
    ```bash
    cd result
